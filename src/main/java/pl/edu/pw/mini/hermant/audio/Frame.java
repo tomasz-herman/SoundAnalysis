@@ -7,6 +7,7 @@ public class Frame {
     public static final double SAMPLE_RATE = 44100.0;
     public static final int SAMPLES_PER_FRAME = 1000;
     public static final double FRAME_TIME = SAMPLES_PER_FRAME / SAMPLE_RATE;
+    public static final double SAMPLE_TIME = 1.0f / SAMPLE_RATE;
 
     private List<Float> samples;
 

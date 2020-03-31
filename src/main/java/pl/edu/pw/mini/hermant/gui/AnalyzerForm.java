@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +35,7 @@ public class AnalyzerForm {
     private JFileChooser inputChooser;
     private Clip clip;
     private HashMap<String, JFreeChart> charts;
+    private HashMap<String, Consumer<String>> characteristics;
 
     public AnalyzerForm() {
         $$$setupUI$$$();
@@ -73,17 +75,27 @@ public class AnalyzerForm {
             markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isSilence), Clip.FRAME_TIME, Color.BLUE);
             markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isVoiced), Clip.FRAME_TIME, Color.RED);
             markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isVoiceless), Clip.FRAME_TIME, Color.GREEN);
+            setCharacteristic("Total volume", Float.toString(clip.getVolume() + 1));
+            setCharacteristic("Volume Dynamic Range", Float.toString(clip.getVolumeDynamicRange()));
+            setCharacteristic("Average Short Time Energy", Float.toString(clip.getShortTimeEnergy()));
+            setCharacteristic("Minimum volume", Float.toString(clip.getMinVolume()));
+            setCharacteristic("Maximum volume", Float.toString(clip.getMaxVolume()));
+            setCharacteristic("Average Zero Crossing Rate", Float.toString(clip.getAverageZeroCrossingRate()));
+            setCharacteristic("Low Short Time Energy Ratio", Float.toString(clip.getLowShortTimeEnergyRatio()));
+            setCharacteristic("High Zero Crossing Rate Ratio", Float.toString(clip.getHighZeroCrossingRateRatio()));
+            setCharacteristic("Standard Deviation of the ZCR", Float.toString(clip.getStandardDeviationOfTheZCR()));
+            setCharacteristic("Music or Speech", clip.isMusic() ? "Music" : "Speech");
             ((JFrame) SwingUtilities.getWindowAncestor(mainPanel)).setTitle(file.getName());
             SwingUtilities.getWindowAncestor(mainPanel).pack();
         }
     }
 
-    private void drawChart(JScrollPane container, String chartName, Stream<Float> stream, float timeStamp) {
+    private void drawChart(JScrollPane container, String chartName, Stream<Float> stream, double timeStep) {
         XYSeriesCollection dataset = new XYSeriesCollection();
         XYSeries timeSeries = new XYSeries("");
         List<Float> data = stream.collect(Collectors.toList());
         float time = 0;
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++, time += timeStamp) {
+        for (int i = 0, dataSize = data.size(); i < dataSize; i++, time += timeStep) {
             timeSeries.add(time, data.get(i));
         }
         dataset.addSeries(timeSeries);
@@ -101,16 +113,20 @@ public class AnalyzerForm {
         charts.put(chartName, chart);
     }
 
-    private void markCharts(String[] charts, Stream<Boolean> stream, float timeStamp, Color color) {
+    private void markCharts(String[] charts, Stream<Boolean> stream, double timeStep, Color color) {
         List<Boolean> data = stream.collect(Collectors.toList());
         float time = 0;
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++, time += timeStamp) {
+        for (int i = 0, dataSize = data.size(); i < dataSize; i++, time += timeStep) {
             if (data.get(i)) {
-                IntervalMarker marker = new IntervalMarker(time, time + timeStamp, color);
+                IntervalMarker marker = new IntervalMarker(time, time + timeStep, color);
                 marker.setAlpha(0.25f);
                 for (String chart : charts) this.charts.get(chart).getXYPlot().addDomainMarker(marker);
             }
         }
+    }
+
+    private void setCharacteristic(String characteristic, String value) {
+        characteristics.get(characteristic).accept(value);
     }
 
     /**
@@ -150,8 +166,15 @@ public class AnalyzerForm {
 
     private void createUIComponents() {
         String[] columnNames = {"Characteristic", "Value"};
-        Object[][] data = {{"Total volume", "0"}, {"Volume Dynamic Range", "0"}, {"Average Short Time Energy", "0"}
-                , {"Minimum volume", "0"}, {"Maximum volume", "0"}, {"Average Zero Crossing Rate", "0"}};
+        Object[][] data = {{"Total volume", "0"}, {"Volume Dynamic Range", "0"}, {"Average Short Time Energy", "0"},
+                {"Minimum volume", "0"}, {"Maximum volume", "0"}, {"Average Zero Crossing Rate", "0"},
+                {"Low Short Time Energy Ratio", "0"}, {"High Zero Crossing Rate Ratio", "0"},
+                {"Standard Deviation of the ZCR", "0"}, {"Music or Speech", "0"}};
+        characteristics = new HashMap<>();
+        for (int i = 0; i < data.length; i++) {
+            int finalI = i;
+            characteristics.put((String) data[i][0], s -> characteristicsTable.setValueAt(s, finalI, 1));
+        }
         characteristicsTable = new JTable(data, columnNames);
         characteristicsTable.setFillsViewportHeight(true);
     }
