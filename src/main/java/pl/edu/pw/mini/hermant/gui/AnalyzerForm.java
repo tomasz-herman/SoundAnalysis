@@ -29,20 +29,20 @@ public class AnalyzerForm {
     private JScrollPane volumeChartPanel;
     private JScrollPane shortTimeEnergyChartPanel;
     private JScrollPane zeroCrossingRateChartPanel;
-    private JTabbedPane chartPane1;
+    private JTabbedPane tabbedPane;
     private JTable characteristicsTable;
+    private JScrollPane characteristicsPanel;
     private MenuBar menuBar;
     private JFileChooser inputChooser;
     private Clip clip;
-    private HashMap<String, JFreeChart> charts;
-    private HashMap<String, Consumer<String>> characteristics;
+    private HashMap<String, JFreeChart> charts = new HashMap<>();
+    private HashMap<String, Consumer<String>> characteristics = new HashMap<>();
 
     public AnalyzerForm() {
         $$$setupUI$$$();
         setupFileChoosers();
         menuBar = new MenuBar();
         menuBar.getMenuItem("Open").addActionListener(this::open);
-        charts = new HashMap<>();
     }
 
     public JPanel getMainPanel() {
@@ -75,7 +75,7 @@ public class AnalyzerForm {
             markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isSilence), Clip.FRAME_TIME, Color.BLUE);
             markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isVoiced), Clip.FRAME_TIME, Color.RED);
             markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isVoiceless), Clip.FRAME_TIME, Color.GREEN);
-            setCharacteristic("Total volume", Float.toString(clip.getVolume() + 1));
+            setCharacteristic("Total volume", Float.toString(clip.getVolume()));
             setCharacteristic("Volume Dynamic Range", Float.toString(clip.getVolumeDynamicRange()));
             setCharacteristic("Average Short Time Energy", Float.toString(clip.getShortTimeEnergy()));
             setCharacteristic("Minimum volume", Float.toString(clip.getMinVolume()));
@@ -94,9 +94,8 @@ public class AnalyzerForm {
         XYSeriesCollection dataset = new XYSeriesCollection();
         XYSeries timeSeries = new XYSeries("");
         List<Float> data = stream.collect(Collectors.toList());
-        float time = 0;
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++, time += timeStep) {
-            timeSeries.add(time, data.get(i));
+        for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
+            timeSeries.add(i * timeStep, data.get(i));
         }
         dataset.addSeries(timeSeries);
         JFreeChart chart = ChartFactory.createXYLineChart(
@@ -115,10 +114,9 @@ public class AnalyzerForm {
 
     private void markCharts(String[] charts, Stream<Boolean> stream, double timeStep, Color color) {
         List<Boolean> data = stream.collect(Collectors.toList());
-        float time = 0;
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++, time += timeStep) {
+        for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
             if (data.get(i)) {
-                IntervalMarker marker = new IntervalMarker(time, time + timeStep, color);
+                IntervalMarker marker = new IntervalMarker(timeStep * i, timeStep * (i + 1), color);
                 marker.setAlpha(0.25f);
                 for (String chart : charts) this.charts.get(chart).getXYPlot().addDomainMarker(marker);
             }
@@ -140,21 +138,21 @@ public class AnalyzerForm {
         createUIComponents();
         mainPanel = new JPanel();
         mainPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        chartPane1 = new JTabbedPane();
-        mainPanel.add(chartPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
+        tabbedPane = new JTabbedPane();
+        mainPanel.add(tabbedPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
         amplitudeChartPanel = new JScrollPane();
-        chartPane1.addTab("Amplitude", amplitudeChartPanel);
+        tabbedPane.addTab("Amplitude", amplitudeChartPanel);
         volumeChartPanel = new JScrollPane();
-        chartPane1.addTab("Volume", volumeChartPanel);
+        tabbedPane.addTab("Volume", volumeChartPanel);
         shortTimeEnergyChartPanel = new JScrollPane();
-        chartPane1.addTab("STE", shortTimeEnergyChartPanel);
+        tabbedPane.addTab("STE", shortTimeEnergyChartPanel);
         zeroCrossingRateChartPanel = new JScrollPane();
-        chartPane1.addTab("ZCR", zeroCrossingRateChartPanel);
-        final JScrollPane scrollPane1 = new JScrollPane();
-        chartPane1.addTab("Clip-level Info", scrollPane1);
-        scrollPane1.setBorder(BorderFactory.createTitledBorder(""));
+        tabbedPane.addTab("ZCR", zeroCrossingRateChartPanel);
+        characteristicsPanel = new JScrollPane();
+        tabbedPane.addTab("Clip-level Info", characteristicsPanel);
+        characteristicsPanel.setBorder(BorderFactory.createTitledBorder(""));
         characteristicsTable.putClientProperty("Table.isFileList", Boolean.FALSE);
-        scrollPane1.setViewportView(characteristicsTable);
+        characteristicsPanel.setViewportView(characteristicsTable);
     }
 
     /**
@@ -170,7 +168,6 @@ public class AnalyzerForm {
                 {"Minimum volume", "0"}, {"Maximum volume", "0"}, {"Average Zero Crossing Rate", "0"},
                 {"Low Short Time Energy Ratio", "0"}, {"High Zero Crossing Rate Ratio", "0"},
                 {"Standard Deviation of the ZCR", "0"}, {"Music or Speech", "0"}};
-        characteristics = new HashMap<>();
         for (int i = 0; i < data.length; i++) {
             int finalI = i;
             characteristics.put((String) data[i][0], s -> characteristicsTable.setValueAt(s, finalI, 1));
