@@ -13,6 +13,7 @@ import pl.edu.pw.mini.hermant.audio.Clip;
 import pl.edu.pw.mini.hermant.audio.Frame;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -23,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class AnalyzerForm {
+public class TimeAnalyzerForm {
     private JPanel mainPanel;
     private JScrollPane amplitudeChartPanel;
     private JScrollPane volumeChartPanel;
@@ -38,7 +39,7 @@ public class AnalyzerForm {
     private HashMap<String, JFreeChart> charts = new HashMap<>();
     private HashMap<String, Consumer<String>> characteristics = new HashMap<>();
 
-    public AnalyzerForm() {
+    public TimeAnalyzerForm() {
         $$$setupUI$$$();
         setupFileChoosers();
         menuBar = new MenuBar();
@@ -150,7 +151,7 @@ public class AnalyzerForm {
         tabbedPane.addTab("ZCR", zeroCrossingRateChartPanel);
         characteristicsPanel = new JScrollPane();
         tabbedPane.addTab("Clip-level Info", characteristicsPanel);
-        characteristicsPanel.setBorder(BorderFactory.createTitledBorder(""));
+        characteristicsPanel.setBorder(BorderFactory.createTitledBorder(null, "", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         characteristicsTable.putClientProperty("Table.isFileList", Boolean.FALSE);
         characteristicsPanel.setViewportView(characteristicsTable);
     }
