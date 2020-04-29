@@ -34,10 +34,24 @@ public class Clip {
         frames = new ArrayList<>();
         int i = 0;
         for (int size = samples.size() / SAMPLES_PER_FRAME; i < size; i++)
-            frames.add(new Frame(samples.subList(i * SAMPLES_PER_FRAME, (i + 1) * SAMPLES_PER_FRAME)));
+            frames.add(new Frame(samples.subList(i * SAMPLES_PER_FRAME, (i + 1) * SAMPLES_PER_FRAME), i * SAMPLES_PER_FRAME));
         List<Float> lastList = samples.subList(i * SAMPLES_PER_FRAME, samples.size());
-        if (lastList.size() > SAMPLES_PER_FRAME / 10) frames.add(new Frame(lastList));
+        if (lastList.size() > SAMPLES_PER_FRAME / 10) frames.add(new Frame(lastList, i * SAMPLES_PER_FRAME));
     }
+
+    public List<Frame> getOverlappingFrames(float overlap) {
+        List<Frame> frames = new ArrayList<>();
+        int advance = (int)(overlap * SAMPLES_PER_FRAME);
+        if(advance < 0) advance = 1;
+        int i = 0;
+        while(i + advance < getSamplesNum()) {
+            Frame frame = new Frame(samples.subList(i, i + SAMPLES_PER_FRAME), i);
+            frames.add(frame);
+            i += advance;
+        }
+        return frames;
+    }
+
 
     private void calculateVolume() {
         volume = 0;

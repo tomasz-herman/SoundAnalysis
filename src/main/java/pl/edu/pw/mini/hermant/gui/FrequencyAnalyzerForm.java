@@ -2,13 +2,10 @@ package pl.edu.pw.mini.hermant.gui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import pl.edu.pw.mini.hermant.audio.Clip;
+import pl.edu.pw.mini.hermant.audio.FourierPoint;
 import pl.edu.pw.mini.hermant.audio.Frame;
 
 import javax.swing.*;
@@ -16,9 +13,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FrequencyAnalyzerForm {
@@ -30,6 +27,8 @@ public class FrequencyAnalyzerForm {
     private JScrollPane amplitudeChartPanel;
     private JTextField fromFrameField;
     private JScrollPane fourierChart;
+    private JLabel frameRangeLabel;
+    private JScrollPane spectrumChart;
     private Clip clip;
 
     private MenuBar menuBar;
@@ -66,30 +65,36 @@ public class FrequencyAnalyzerForm {
             } catch (IOException | InterruptedException ex) {
                 ex.printStackTrace();
             }
-            drawChart(amplitudeChartPanel, "Amplitude", clip.getSamples().stream(), Clip.SAMPLE_TIME);
+            frameRangeLabel.setText(String.format("frame range(<from> <to>, max: %d):", clip.getFramesNum()));
+            drawTimeSeriesChart(amplitudeChartPanel, "Amplitude", clip.getSamples().stream(), Clip.SAMPLE_TIME);
+            drawXYSeriesChart(fourierChart, "Fourier", clip.getFrames().get(0).getFrequencies().stream());
+            drawHeatMapChart(spectrumChart, "Spectrum", clip.getFrames(), Clip.SAMPLE_TIME);
             ((JFrame) SwingUtilities.getWindowAncestor(mainPanel)).setTitle(file.getName());
             SwingUtilities.getWindowAncestor(mainPanel).pack();
         }
     }
 
-    private void drawChart(JScrollPane container, String chartName, Stream<Float> stream, double timeStep) {
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        XYSeries timeSeries = new XYSeries("");
-        List<Float> data = stream.collect(Collectors.toList());
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
-            timeSeries.add(i * timeStep, data.get(i));
-        }
-        dataset.addSeries(timeSeries);
-        JFreeChart chart = ChartFactory.createXYLineChart(
-                "",
-                "Time",
-                chartName,
-                dataset,
-                PlotOrientation.VERTICAL,
-                false, true, false);
-        //container.setSize(1920, 320);
+    private void drawHeatMapChart(JScrollPane container, String chartName, List<Frame> frames, double timeStep) {
+        List<Stream<FourierPoint>> data = new ArrayList<>();
+        for (Frame frame : frames) data.add(frame.getFrequencies().stream());
+        JFreeChart chart = ChartUtils.createHeatMapChart(chartName, data, timeStep);
         ChartPanel chartPanel = new ChartPanel(chart);
-        //container.setPreferredSize(new Dimension(1900, 300));
+        container.setViewportView(chartPanel);
+        chartPanel.setPreferredSize(new Dimension(container.getWidth() - 24, container.getHeight() - 24));
+        charts.put(chartName, chart);
+    }
+
+    private void drawXYSeriesChart(JScrollPane container, String chartName, Stream<FourierPoint> stream) {
+        JFreeChart chart = ChartUtils.createXYSeriesChart(chartName, stream);
+        ChartPanel chartPanel = new ChartPanel(chart);
+        container.setViewportView(chartPanel);
+        chartPanel.setPreferredSize(new Dimension(container.getWidth() - 24, container.getHeight() - 24));
+        charts.put(chartName, chart);
+    }
+
+    private void drawTimeSeriesChart(JScrollPane container, String chartName, Stream<Float> stream, double timeStep) {
+        JFreeChart chart = ChartUtils.createTimeSeriesChart(chartName, stream, timeStep);
+        ChartPanel chartPanel = new ChartPanel(chart);
         container.setViewportView(chartPanel);
         chartPanel.setPreferredSize(new Dimension(container.getWidth() - 24, container.getHeight() - 24));
         charts.put(chartName, chart);
@@ -112,12 +117,12 @@ public class FrequencyAnalyzerForm {
         mainPanel.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         tabbedPane1 = new JTabbedPane();
         panel1.add(tabbedPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(200, 200), null, 0, false));
+        fourierChart = new JScrollPane();
+        tabbedPane1.addTab("Transformata Fouriera", fourierChart);
+        spectrumChart = new JScrollPane();
+        tabbedPane1.addTab("Spektrum", spectrumChart);
         final JScrollPane scrollPane1 = new JScrollPane();
-        tabbedPane1.addTab("Untitled", scrollPane1);
-        final JScrollPane scrollPane2 = new JScrollPane();
-        tabbedPane1.addTab("Spectrogram", scrollPane2);
-        final JScrollPane scrollPane3 = new JScrollPane();
-        tabbedPane1.addTab("Untitled", scrollPane3);
+        tabbedPane1.addTab("Ton podstawowy", scrollPane1);
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridLayoutManager(2, 5, new Insets(0, 0, 0, 0), -1, -1));
         panel1.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
@@ -136,15 +141,15 @@ public class FrequencyAnalyzerForm {
         final JLabel label2 = new JLabel();
         label2.setText("window func:");
         panel2.add(label2, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label3 = new JLabel();
-        label3.setText("frame range(<from> <to>, max: 1):");
-        panel2.add(label3, new GridConstraints(0, 3, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        frameRangeLabel = new JLabel();
+        frameRangeLabel.setText("frame range(<from> <to>, max: 1):");
+        panel2.add(frameRangeLabel, new GridConstraints(0, 3, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         toFrameField = new JTextField();
         toFrameField.setText("1");
         panel2.add(toFrameField, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, 1, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        final JLabel label4 = new JLabel();
-        label4.setText("0");
-        panel2.add(label4, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label3 = new JLabel();
+        label3.setText("0");
+        panel2.add(label3, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         fromFrameField = new JTextField();
         fromFrameField.setText("0");
         panel2.add(fromFrameField, new GridConstraints(1, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, 1, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));

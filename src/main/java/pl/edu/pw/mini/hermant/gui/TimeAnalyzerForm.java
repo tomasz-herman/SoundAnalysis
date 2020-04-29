@@ -92,22 +92,9 @@ public class TimeAnalyzerForm {
     }
 
     private void drawChart(JScrollPane container, String chartName, Stream<Float> stream, double timeStep) {
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        XYSeries timeSeries = new XYSeries("");
-        List<Float> data = stream.collect(Collectors.toList());
-        for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
-            timeSeries.add(i * timeStep, data.get(i));
-        }
-        dataset.addSeries(timeSeries);
-        JFreeChart chart = ChartFactory.createXYLineChart(
-                "",
-                "Time",
-                chartName,
-                dataset,
-                PlotOrientation.VERTICAL,
-                false, true, false);
-        container.setSize(1920, 320);
+        JFreeChart chart = ChartUtils.createTimeSeriesChart(chartName, stream, timeStep);
         ChartPanel chartPanel = new ChartPanel(chart);
+        container.setSize(1920, 320);
         container.setPreferredSize(new Dimension(1900, 300));
         container.setViewportView(chartPanel);
         charts.put(chartName, chart);
