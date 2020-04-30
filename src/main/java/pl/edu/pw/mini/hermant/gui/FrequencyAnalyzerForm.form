@@ -127,7 +127,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <text value="1"/>
+                  <text value="999999"/>
                 </properties>
               </component>
               <component id="14923" class="javax.swing.JLabel" binding="overlapLabel">

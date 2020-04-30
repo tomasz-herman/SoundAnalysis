@@ -8,4 +8,12 @@ public class FourierPoint {
         this.frequency = frequency;
         this.amplitude = amplitude;
     }
+
+    public float getFrequency() {
+        return frequency;
+    }
+
+    public float getAmplitude() {
+        return amplitude;
+    }
 }

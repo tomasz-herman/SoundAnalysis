@@ -12,6 +12,7 @@ import org.jfree.chart.title.PaintScaleLegend;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.xy.*;
+import pl.edu.pw.mini.hermant.audio.Clip;
 import pl.edu.pw.mini.hermant.audio.FourierPoint;
 
 import javax.swing.*;
@@ -62,26 +63,26 @@ public class ChartUtils {
             double[][] data = new double[3][temp.size()];
             for (int i1 = 0; i1 < temp.size(); i1++) {
                 FourierPoint fourierPoint = temp.get(i1);
-                data[0][i1] = i;
-                data[1][i1] = i1;
-                data[2][i1] = Math.min(fourierPoint.amplitude, 25.0f);
+                data[0][i1] = time;
+                data[1][i1] = fourierPoint.frequency;
+                data[2][i1] = Math.min(fourierPoint.amplitude, 1f);
             }
             dataset.addSeries("Series" + time, data);
         }
-        return createChart(dataset);
+        return createChart(dataset, (float)timeStep, (float) Clip.SAMPLE_RATE / Clip.SAMPLES_PER_FRAME);
     }
 
-    private static JFreeChart createChart(XYDataset dataset) {
-        NumberAxis xAxis = new NumberAxis("x Axis");
-        NumberAxis yAxis = new NumberAxis("y Axis");
+    private static JFreeChart createChart(XYDataset dataset, float blockX, float blockY) {
+        NumberAxis xAxis = new NumberAxis("Time");
+        NumberAxis yAxis = new NumberAxis("Frequency");
         XYPlot plot = new XYPlot(dataset, xAxis, yAxis, null);
         XYBlockRenderer r = new XYBlockRenderer();
-        SpectrumPaintScale ps = new SpectrumPaintScale(0, 25);
+        SpectrumPaintScale ps = new SpectrumPaintScale(0, 1f);
         r.setPaintScale(ps);
-        r.setBlockHeight(1.0f);
-        r.setBlockWidth(1.0f);
+        r.setBlockHeight(blockY);
+        r.setBlockWidth(blockX);
         plot.setRenderer(r);
-        JFreeChart chart = new JFreeChart("Title",
+        JFreeChart chart = new JFreeChart("Spectrum",
                 JFreeChart.DEFAULT_TITLE_FONT, plot, false);
         NumberAxis scaleAxis = new NumberAxis("Scale");
         scaleAxis.setAxisLinePaint(Color.white);

@@ -17,10 +17,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FrequencyAnalyzerForm {
@@ -41,6 +40,7 @@ public class FrequencyAnalyzerForm {
     private float overlap = 0.0f;
     private int from = 0;
     private int to = 1;
+    private int max = 1;
     private AudioWindow window = new RectangleAudioWindow();
 
     private MenuBar menuBar;
@@ -52,11 +52,13 @@ public class FrequencyAnalyzerForm {
         setupFileChoosers();
         menuBar = new MenuBar();
         menuBar.getMenuItem("Open").addActionListener(this::open);
-        overlapSlider.addChangeListener(e -> overlapLabel.setText(String.valueOf(overlap = (float) overlapSlider.getValue() / 100.0f)));
+        overlapSlider.addChangeListener(e -> {
+            overlapLabel.setText(String.valueOf(overlap = (float) overlapSlider.getValue() / 100.0f));
+            frameRangeLabel.setText(String.format("frame range(<from> <to>, max: %d):", clip == null ? 999999 : (max = clip.getFramesNum(overlap))));
+        });
         redrawButton.addActionListener(e -> {
             if (clip == null) return;
-            drawHeatMapChart(spectrumChartPanel, "Spectrum", clip.getOverlappingFrames(overlap), Clip.SAMPLE_TIME);
-            drawTimeSeriesChart(baseToneChartPanel, "Base Tone", clip.getOverlappingFrames(overlap).stream().map(f -> f.calculateBasicTone(window)), Clip.SAMPLE_TIME * (1.0f - overlap));
+            drawFrequencyCharts();
         });
         windowFunctionCombo.addActionListener(e -> {
             String selected = (String) Objects.requireNonNull(windowFunctionCombo.getSelectedItem());
@@ -72,20 +74,39 @@ public class FrequencyAnalyzerForm {
                     break;
             }
         });
-        fromFrameField.addActionListener(e -> {
-            try {
-                from = Integer.parseInt(fromFrameField.getText());
-            } catch (NumberFormatException exception) {
-                from = 0;
+    }
+
+    void updateFrameRange() {
+        max = clip.getFramesNum(overlap);
+        try {
+            from = Integer.parseInt(fromFrameField.getText());
+        } catch (NumberFormatException exception) {
+            from = 0;
+        }
+        try {
+            to = Integer.parseInt(toFrameField.getText());
+        } catch (NumberFormatException exception) {
+            to = 1;
+        }
+        if (from < 0) from = 0;
+        if (to > max) to = max;
+        if (to < from) to = from;
+    }
+
+    private void drawFrequencyCharts() {
+        updateFrameRange();
+        List<Frame> frames = clip.getOverlappingFrames(overlap).subList(from, to);
+        Map<Float, Float> frequencies = new HashMap<>();
+        for (Frame frame : frames) {
+            Map<Float, Float> f = frame.calculateFrequencies(window).stream().collect(Collectors.toMap(FourierPoint::getFrequency, FourierPoint::getAmplitude));
+            for (Map.Entry<Float, Float> entry : f.entrySet()) {
+                if (!frequencies.containsKey(entry.getKey())) frequencies.put(entry.getKey(), entry.getValue());
+                else frequencies.put(entry.getKey(), frequencies.get(entry.getKey()) + entry.getValue());
             }
-        });
-        toFrameField.addActionListener(e -> {
-            try {
-                to = Integer.parseInt(fromFrameField.getText());
-            } catch (NumberFormatException exception) {
-                to = 1;
-            }
-        });
+        }
+        drawXYSeriesChart(fourierChartPanel, "Fourier", frequencies.entrySet().stream().map(entry -> new FourierPoint(entry.getKey(), entry.getValue() / frames.size())));
+        drawHeatMapChart(spectrumChartPanel, "Spectrum", frames, Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(baseToneChartPanel, "Base Tone", frames.stream().map(f -> f.calculateBasicTone(window)), Clip.FRAME_TIME * (1.0f - overlap));
     }
 
     public JPanel getMainPanel() {
@@ -113,9 +134,7 @@ public class FrequencyAnalyzerForm {
             }
             frameRangeLabel.setText(String.format("frame range(<from> <to>, max: %d):", clip.getFramesNum()));
             drawTimeSeriesChart(amplitudeChartPanel, "Amplitude", clip.getSamples().stream(), Clip.SAMPLE_TIME);
-            drawXYSeriesChart(fourierChartPanel, "Fourier", clip.getFrames().get(0).getFrequencies().stream());
-            drawHeatMapChart(spectrumChartPanel, "Spectrum", clip.getOverlappingFrames(overlap), Clip.FRAME_TIME);
-            drawTimeSeriesChart(baseToneChartPanel, "Base Tone", clip.getOverlappingFrames(overlap).stream().map(f -> f.calculateBasicTone(window)), Clip.SAMPLE_TIME * (1.0f - overlap));
+            drawFrequencyCharts();
             ((JFrame) SwingUtilities.getWindowAncestor(mainPanel)).setTitle(file.getName());
             SwingUtilities.getWindowAncestor(mainPanel).pack();
         }
@@ -123,7 +142,7 @@ public class FrequencyAnalyzerForm {
 
     private void drawHeatMapChart(JScrollPane container, String chartName, List<Frame> frames, double timeStep) {
         List<Stream<FourierPoint>> data = new ArrayList<>();
-        for (Frame frame : frames) data.add(frame.getFrequencies().stream());
+        for (Frame frame : frames) data.add(frame.calculateFrequencies(window).stream());
         JFreeChart chart = ChartUtils.createHeatMapChart(chartName, data, timeStep);
         ChartPanel chartPanel = new ChartPanel(chart);
         container.setViewportView(chartPanel);
@@ -196,7 +215,7 @@ public class FrequencyAnalyzerForm {
         frameRangeLabel.setText("frame range(<from> <to>, max: 1):");
         panel2.add(frameRangeLabel, new GridConstraints(0, 3, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         toFrameField = new JTextField();
-        toFrameField.setText("1");
+        toFrameField.setText("999999");
         panel2.add(toFrameField, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, 1, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         overlapLabel = new JLabel();
         overlapLabel.setText("0");

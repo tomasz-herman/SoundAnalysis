@@ -142,6 +142,18 @@ public class Clip {
         return frames.size();
     }
 
+    public int getFramesNum(float overlap) {
+        int advance = (int)((1 - overlap) * SAMPLES_PER_FRAME);
+        if(advance <= 0) advance = 1;
+        int i = 0;
+        int k = 0;
+        while(i + SAMPLES_PER_FRAME < getSamplesNum()) {
+            k++;
+            i += advance;
+        }
+        return k;
+    }
+
     public float getVolumeDynamicRange() {
         return vdr;
     }

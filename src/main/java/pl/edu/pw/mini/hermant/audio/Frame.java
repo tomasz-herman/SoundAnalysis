@@ -18,7 +18,6 @@ public class Frame {
     public static final double SAMPLE_TIME = 1.0f / SAMPLE_RATE;
 
     private List<Float> samples;
-    private List<FourierPoint> frequencies;
 
     private float volume, ste, zcr;
     private int frameStart;
@@ -29,8 +28,6 @@ public class Frame {
         this.samples = samples;
         this.frameStart = frameStart;
         calculateVolume();
-        calculateFrequencies(new RectangleAudioWindow());
-        calculateBasicTone(new RectangleAudioWindow());
     }
 
     public Stream<Float> getSamplesStream() {
@@ -38,7 +35,6 @@ public class Frame {
     }
 
     public float calculateBasicTone(AudioWindow window) {
-//        if(volume < 0.02) return 0;
         float[] frame = new float[samples.size() * 2];
         for (int i = 0, samplesSize = samples.size(); i < samplesSize; i++) {
             Float sample = samples.get(i);
@@ -72,14 +68,13 @@ public class Frame {
                 }
             }
         }
-        System.out.println(maxAmplitude + " " + volume);
-        if(maxAmplitude < 12 || volume < 0.1 || maxFrequency == 0) basicToneFrequency = maxFrequency = 0;
+        if(maxAmplitude < 12 || volume < 0.1 || maxFrequency == 0 || isSilence()) basicToneFrequency = maxFrequency = 0;
         basicToneFrequency = maxFrequency;
         return basicToneFrequency;
     }
 
-    public void calculateFrequencies(AudioWindow window) {
-        frequencies = new ArrayList<>();
+    public List<FourierPoint> calculateFrequencies(AudioWindow window) {
+        List<FourierPoint> frequencies = new ArrayList<>();
         float[] frame = new float[2 * samples.size()];
         for (int i = 0, samplesSize = samples.size(); i < samplesSize; i++) {
             Float sample = samples.get(i);
@@ -93,12 +88,13 @@ public class Frame {
             float im = frame[i + 1];
             frequencies.add(TransformComplex(re, im, i >> 1));
         }
+        return frequencies;
     }
 
     @Contract("_, _, _ -> new")
     private static @NotNull FourierPoint TransformComplex(float re, float im, int index) {
-        float frequency = (float) index / Frame.SAMPLES_PER_FRAME * (float) SAMPLE_RATE;
-        float amplitude = (float) Math.sqrt(re * re + im * im);
+        float frequency = (float) index / SAMPLES_PER_FRAME * (float) SAMPLE_RATE;
+        float amplitude = (float) Math.sqrt(re * re + im * im) * 100f / SAMPLES_PER_FRAME;
         return new FourierPoint(frequency, amplitude);
     }
 
@@ -145,9 +141,5 @@ public class Frame {
 
     public int getFrameStart() {
         return frameStart;
-    }
-
-    public List<FourierPoint> getFrequencies() {
-        return frequencies;
     }
 }
