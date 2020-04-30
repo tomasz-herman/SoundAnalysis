@@ -124,7 +124,7 @@ public class ChartUtils {
         public Paint getPaint(double value) {
             float scaledValue = (float) (value / (getUpperBound() - getLowerBound()));
             float scaledH = H1 + scaledValue * (H2 - H1);
-            return Color.getHSBColor(scaledH, 1f, 1f);
+            return Color.getHSBColor(0.6f - scaledH, 1f, 1f);
         }
     }
 }

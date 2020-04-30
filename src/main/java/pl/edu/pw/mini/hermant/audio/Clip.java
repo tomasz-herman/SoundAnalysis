@@ -41,10 +41,10 @@ public class Clip {
 
     public List<Frame> getOverlappingFrames(float overlap) {
         List<Frame> frames = new ArrayList<>();
-        int advance = (int)(overlap * SAMPLES_PER_FRAME);
-        if(advance < 0) advance = 1;
+        int advance = (int)((1 - overlap) * SAMPLES_PER_FRAME);
+        if(advance <= 0) advance = 1;
         int i = 0;
-        while(i + advance < getSamplesNum()) {
+        while(i + SAMPLES_PER_FRAME < getSamplesNum()) {
             Frame frame = new Frame(samples.subList(i, i + SAMPLES_PER_FRAME), i);
             frames.add(frame);
             i += advance;

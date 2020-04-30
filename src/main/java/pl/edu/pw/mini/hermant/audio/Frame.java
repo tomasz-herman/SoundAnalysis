@@ -37,38 +37,46 @@ public class Frame {
         return samples.stream();
     }
 
-    public void calculateBasicTone(AudioWindow window) {
-        float[] frame = new float[2 * samples.size()];
+    public float calculateBasicTone(AudioWindow window) {
+        float[] frame = new float[samples.size() * 2];
         for (int i = 0, samplesSize = samples.size(); i < samplesSize; i++) {
             Float sample = samples.get(i);
             sample = sample * window.calculateCoefficient(i, samplesSize);
             frame[i] = sample;
         }
         FloatFFT_1D fft = new FloatFFT_1D(samples.size());
-        FloatFFT_1D fft2 = new FloatFFT_1D(samples.size() / 2);
-        float[] half = new float[samples.size()];
         fft.realForwardFull(frame);
-        for (int i = 0; i < samples.size(); i+=2) {
+        float[] temp = new float[samples.size() * 2];
+        for (int i = 0; i < samples.size(); i += 2) {
             float re = frame[i];
             float im = frame[i + 1];
-            float sig = re * re + im * im;
-            if(sig <= 0.000001) sig = 0.0f;
-            else sig = (float)Math.log10(sig);
-            half[i] = sig;
+            float sig = (float)Math.sqrt(re * re + im * im);
+            sig = (float) Math.log10(sig);
+            temp[i >> 1] = sig;
         }
-        fft2.realInverseFull(half, true);
-        float reF = half[0];
-        float imF = half[1];
-        Complex first = new Complex(reF, imF);
-        Complex[] cepstrum = new Complex[samples.size() / 2];
-        for (int i = 0; i < cepstrum.length; i+=2) {
-            Complex c = new Complex(half[i], half[i+1]);
-//            cepstrum[i] = c.divide(first);
-            System.out.println(c);
+        fft.realInverseFull(temp, false);
+        float maxFrequency = 0;
+        float maxAmplitude = 0;
+        float[] reals = new float[samples.size()];
+        for (int i = 0; i < temp.length; i+=2) {
+            reals[i >> 1] = temp[i];
         }
+        for (int j = 1; j <= reals.length; j++) {
+            float freq = (float) SAMPLE_RATE / ((float) j);
+            float amp = reals[j - 1];
+            if (freq >= 50 && freq <= 400) {
+                if (maxAmplitude < amp) {
+                    maxAmplitude = amp;
+                    maxFrequency = freq;
+                }
+            }
+        }
+        basicToneFrequency = maxFrequency;
+        System.out.println(basicToneFrequency);
+        return basicToneFrequency;
     }
 
-    public void calculateFrequencies(AudioWindow window){
+    public void calculateFrequencies(AudioWindow window) {
         frequencies = new ArrayList<>();
         float[] frame = new float[2 * samples.size()];
         for (int i = 0, samplesSize = samples.size(); i < samplesSize; i++) {
@@ -78,7 +86,7 @@ public class Frame {
         }
         FloatFFT_1D fft = new FloatFFT_1D(samples.size());
         fft.realForwardFull(frame);
-        for (int i = 0; i < samples.size(); i+=2) {
+        for (int i = 0; i < samples.size(); i += 2) {
             float re = frame[i];
             float im = frame[i + 1];
             frequencies.add(TransformComplex(re, im, i >> 1));
@@ -86,10 +94,9 @@ public class Frame {
     }
 
     @Contract("_, _, _ -> new")
-    private static @NotNull FourierPoint TransformComplex(float re, float im, int index)
-    {
-        float frequency = (float)index / Frame.SAMPLES_PER_FRAME * (float) SAMPLE_RATE;
-        float amplitude = (float)Math.sqrt(re * re + im * im);
+    private static @NotNull FourierPoint TransformComplex(float re, float im, int index) {
+        float frequency = (float) index / Frame.SAMPLES_PER_FRAME * (float) SAMPLE_RATE;
+        float amplitude = (float) Math.sqrt(re * re + im * im);
         return new FourierPoint(frequency, amplitude);
     }
 
@@ -107,7 +114,7 @@ public class Frame {
             float nextSample = samples.get(i + 1);
             if ((Math.signum(sample) - Math.signum(nextSample)) != 0) zcr += 1.0f;
         }
-        zcr *= (float)samples.size() / SAMPLES_PER_FRAME;
+        zcr *= (float) samples.size() / SAMPLES_PER_FRAME;
     }
 
     public boolean isVoiceless() {
@@ -119,7 +126,7 @@ public class Frame {
     }
 
     public boolean isSilence() {
-        return ( zcr > 48 && volume < 0.02 ) || (volume < 0.01 && zcr > 24) || volume < 0.005;
+        return (zcr > 48 && volume < 0.02) || (volume < 0.01 && zcr > 24) || volume < 0.005;
     }
 
     public float getVolume() {
