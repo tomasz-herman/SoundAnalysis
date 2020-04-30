@@ -1,11 +1,9 @@
 package pl.edu.pw.mini.hermant.audio;
 
-import org.apache.commons.math3.complex.Complex;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import pl.edu.pw.mini.hermant.audio.window.AudioWindow;
 import org.jtransforms.fft.FloatFFT_1D;
-import pl.edu.pw.mini.hermant.audio.window.RectangleAudioWindow;
 
 import java.util.ArrayList;
 import java.util.List;

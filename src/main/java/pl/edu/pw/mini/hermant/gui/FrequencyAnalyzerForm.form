@@ -45,6 +45,14 @@
                 <border type="none"/>
                 <children/>
               </scrollpane>
+              <scrollpane id="edc3e" binding="selectedAmplitudeChartPanel">
+                <constraints>
+                  <tabbedpane title="Amplitude"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </scrollpane>
               <scrollpane id="53b66" binding="spectrumChartPanel">
                 <constraints>
                   <tabbedpane title="Spektrum"/>

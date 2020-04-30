@@ -36,6 +36,7 @@ public class FrequencyAnalyzerForm {
     private JButton redrawButton;
     private JLabel overlapLabel;
     private JScrollPane baseToneChartPanel;
+    private JScrollPane selectedAmplitudeChartPanel;
     private Clip clip;
     private float overlap = 0.0f;
     private int from = 0;
@@ -104,6 +105,8 @@ public class FrequencyAnalyzerForm {
                 else frequencies.put(entry.getKey(), frequencies.get(entry.getKey()) + entry.getValue());
             }
         }
+        List<Float> selectedSamples = clip.getSamples().subList(frames.get(0).getFrameStart(), frames.get(frames.size() - 1).getFrameStart() + Frame.SAMPLES_PER_FRAME);
+        drawTimeSeriesChart(selectedAmplitudeChartPanel, "Range Amplitude", selectedSamples.stream(), Clip.SAMPLE_TIME);
         drawXYSeriesChart(fourierChartPanel, "Fourier", frequencies.entrySet().stream().map(entry -> new FourierPoint(entry.getKey(), entry.getValue() / frames.size())));
         drawHeatMapChart(spectrumChartPanel, "Spectrum", frames, Clip.FRAME_TIME * (1.0f - overlap));
         drawTimeSeriesChart(baseToneChartPanel, "Base Tone", frames.stream().map(f -> f.calculateBasicTone(window)), Clip.FRAME_TIME * (1.0f - overlap));
@@ -185,6 +188,8 @@ public class FrequencyAnalyzerForm {
         panel1.add(tabbedPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(200, 200), null, 0, false));
         fourierChartPanel = new JScrollPane();
         tabbedPane1.addTab("Transformata Fouriera", fourierChartPanel);
+        selectedAmplitudeChartPanel = new JScrollPane();
+        tabbedPane1.addTab("Amplitude", selectedAmplitudeChartPanel);
         spectrumChartPanel = new JScrollPane();
         tabbedPane1.addTab("Spektrum", spectrumChartPanel);
         baseToneChartPanel = new JScrollPane();
