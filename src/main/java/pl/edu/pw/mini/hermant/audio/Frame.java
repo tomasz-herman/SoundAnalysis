@@ -38,6 +38,7 @@ public class Frame {
     }
 
     public float calculateBasicTone(AudioWindow window) {
+//        if(volume < 0.02) return 0;
         float[] frame = new float[samples.size() * 2];
         for (int i = 0, samplesSize = samples.size(); i < samplesSize; i++) {
             Float sample = samples.get(i);
@@ -56,7 +57,7 @@ public class Frame {
         }
         fft.realInverseFull(temp, false);
         float maxFrequency = 0;
-        float maxAmplitude = 0;
+        float maxAmplitude = Float.NEGATIVE_INFINITY;
         float[] reals = new float[samples.size()];
         for (int i = 0; i < temp.length; i+=2) {
             reals[i >> 1] = temp[i];
@@ -71,8 +72,9 @@ public class Frame {
                 }
             }
         }
+        System.out.println(maxAmplitude + " " + volume);
+        if(maxAmplitude < 12 || volume < 0.1 || maxFrequency == 0) basicToneFrequency = maxFrequency = 0;
         basicToneFrequency = maxFrequency;
-        System.out.println(basicToneFrequency);
         return basicToneFrequency;
     }
 

@@ -90,9 +90,9 @@
                 </constraints>
                 <properties>
                   <model>
-                    <item value="Rectangle Audio Window"/>
-                    <item value="Van Hann Audio Window"/>
-                    <item value="Hamming Audio Window"/>
+                    <item value="Rectangle"/>
+                    <item value="Van Hann"/>
+                    <item value="Hamming"/>
                   </model>
                 </properties>
               </component>

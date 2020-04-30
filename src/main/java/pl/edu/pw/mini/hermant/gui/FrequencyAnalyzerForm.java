@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public class FrequencyAnalyzerForm {
@@ -38,7 +39,9 @@ public class FrequencyAnalyzerForm {
     private JScrollPane baseToneChartPanel;
     private Clip clip;
     private float overlap = 0.0f;
-    private AudioWindow window = new VanHannAudioWindow();
+    private int from = 0;
+    private int to = 1;
+    private AudioWindow window = new RectangleAudioWindow();
 
     private MenuBar menuBar;
     private JFileChooser inputChooser;
@@ -56,11 +59,32 @@ public class FrequencyAnalyzerForm {
             drawTimeSeriesChart(baseToneChartPanel, "Base Tone", clip.getOverlappingFrames(overlap).stream().map(f -> f.calculateBasicTone(window)), Clip.SAMPLE_TIME * (1.0f - overlap));
         });
         windowFunctionCombo.addActionListener(e -> {
-            if (windowFunctionCombo.getSelectedItem().equals("Rectangle Audio Window"))
-                window = new RectangleAudioWindow();
-            if (windowFunctionCombo.getSelectedItem().equals("Van Hann Audio Window"))
-                window = new VanHannAudioWindow();
-            if (windowFunctionCombo.getSelectedItem().equals("Hamming Audio Window")) window = new HammingAudioWindow();
+            String selected = (String) Objects.requireNonNull(windowFunctionCombo.getSelectedItem());
+            switch (selected) {
+                case "Rectangle":
+                    window = new RectangleAudioWindow();
+                    break;
+                case "Van Hann":
+                    window = new VanHannAudioWindow();
+                    break;
+                case "Hamming":
+                    window = new HammingAudioWindow();
+                    break;
+            }
+        });
+        fromFrameField.addActionListener(e -> {
+            try {
+                from = Integer.parseInt(fromFrameField.getText());
+            } catch (NumberFormatException exception) {
+                from = 0;
+            }
+        });
+        toFrameField.addActionListener(e -> {
+            try {
+                to = Integer.parseInt(fromFrameField.getText());
+            } catch (NumberFormatException exception) {
+                to = 1;
+            }
         });
     }
 
@@ -90,7 +114,7 @@ public class FrequencyAnalyzerForm {
             frameRangeLabel.setText(String.format("frame range(<from> <to>, max: %d):", clip.getFramesNum()));
             drawTimeSeriesChart(amplitudeChartPanel, "Amplitude", clip.getSamples().stream(), Clip.SAMPLE_TIME);
             drawXYSeriesChart(fourierChartPanel, "Fourier", clip.getFrames().get(0).getFrequencies().stream());
-            drawHeatMapChart(spectrumChartPanel, "Spectrum", clip.getOverlappingFrames(overlap), Clip.SAMPLE_TIME);
+            drawHeatMapChart(spectrumChartPanel, "Spectrum", clip.getOverlappingFrames(overlap), Clip.FRAME_TIME);
             drawTimeSeriesChart(baseToneChartPanel, "Base Tone", clip.getOverlappingFrames(overlap).stream().map(f -> f.calculateBasicTone(window)), Clip.SAMPLE_TIME * (1.0f - overlap));
             ((JFrame) SwingUtilities.getWindowAncestor(mainPanel)).setTitle(file.getName());
             SwingUtilities.getWindowAncestor(mainPanel).pack();
@@ -157,9 +181,9 @@ public class FrequencyAnalyzerForm {
         panel2.add(overlapSlider, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(480, -1), null, null, 0, false));
         windowFunctionCombo = new JComboBox();
         final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
-        defaultComboBoxModel1.addElement("Rectangle Audio Window");
-        defaultComboBoxModel1.addElement("Van Hann Audio Window");
-        defaultComboBoxModel1.addElement("Hamming Audio Window");
+        defaultComboBoxModel1.addElement("Rectangle");
+        defaultComboBoxModel1.addElement("Van Hann");
+        defaultComboBoxModel1.addElement("Hamming");
         windowFunctionCombo.setModel(defaultComboBoxModel1);
         panel2.add(windowFunctionCombo, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, 1, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label1 = new JLabel();
