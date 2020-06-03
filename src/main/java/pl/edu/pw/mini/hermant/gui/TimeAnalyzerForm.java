@@ -2,13 +2,9 @@ package pl.edu.pw.mini.hermant.gui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.IntervalMarker;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import pl.edu.pw.mini.hermant.audio.Clip;
 import pl.edu.pw.mini.hermant.audio.Frame;
 
@@ -24,7 +20,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TimeAnalyzerForm {
+public class TimeAnalyzerForm implements Form {
     private JPanel mainPanel;
     private JScrollPane amplitudeChartPanel;
     private JScrollPane volumeChartPanel;
@@ -33,11 +29,11 @@ public class TimeAnalyzerForm {
     private JTabbedPane tabbedPane;
     private JTable characteristicsTable;
     private JScrollPane characteristicsPanel;
-    private MenuBar menuBar;
+    private final MenuBar menuBar;
     private JFileChooser inputChooser;
     private Clip clip;
-    private HashMap<String, JFreeChart> charts = new HashMap<>();
-    private HashMap<String, Consumer<String>> characteristics = new HashMap<>();
+    private final HashMap<String, JFreeChart> charts = new HashMap<>();
+    private final HashMap<String, Consumer<String>> characteristics = new HashMap<>();
 
     public TimeAnalyzerForm() {
         $$$setupUI$$$();

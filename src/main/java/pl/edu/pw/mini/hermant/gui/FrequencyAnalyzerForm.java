@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FrequencyAnalyzerForm {
+public class FrequencyAnalyzerForm implements Form {
     private JPanel mainPanel;
     private JTabbedPane tabbedPane1;
     private JSlider overlapSlider;
