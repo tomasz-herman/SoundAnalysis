@@ -140,7 +140,7 @@ public class Frame {
         float bandwidth = 0;
         float temp = 0;
         for (FourierPoint frequency : frequencies) {
-            bandwidth += (frequency.frequency - fCentroid) * (frequency.amplitude - fCentroid) * (frequency.amplitude * frequency.amplitude);
+            bandwidth += (frequency.frequency - fCentroid) * (frequency.frequency - fCentroid) * (frequency.amplitude * frequency.amplitude);
             temp += frequency.amplitude * frequency.amplitude;
         }
         return (float)Math.sqrt(bandwidth / temp);
