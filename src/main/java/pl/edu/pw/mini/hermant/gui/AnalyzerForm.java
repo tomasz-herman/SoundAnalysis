@@ -46,6 +46,12 @@ public class AnalyzerForm implements Form {
     private JScrollPane shortTimeEnergyChartPanel;
     private JScrollPane zeroCrossingRateChartPanel;
     private JScrollPane frequencyVolumeChartPanel;
+    private JScrollPane frequencyCentroidChartPanel;
+    private JScrollPane effectiveBandwithChartPanel;
+    private JTabbedPane tabbedPane1;
+    private JScrollPane ersb1ChartPanel;
+    private JScrollPane ersb2ChartPanel;
+    private JScrollPane ersb3ChartPanel;
     private Clip clip;
     private float overlap = 0.0f;
     private int from = 0;
@@ -69,7 +75,7 @@ public class AnalyzerForm implements Form {
         });
         redrawButton.addActionListener(e -> {
             if (clip == null) return;
-            drawFrequencyCharts();
+            drawCharts();
         });
         windowFunctionCombo.addActionListener(e -> {
             String selected = (String) Objects.requireNonNull(windowFunctionCombo.getSelectedItem());
@@ -104,7 +110,8 @@ public class AnalyzerForm implements Form {
         if (to < from) to = from;
     }
 
-    private void drawFrequencyCharts() {
+    private void drawCharts() {
+        drawTimeSeriesChart(amplitudeChartPanel, "Amplitude", clip.getSamples().stream(), Clip.SAMPLE_TIME);
         updateFrameRange();
         List<Frame> frames = clip.getOverlappingFrames(overlap).subList(from, to);
         Map<Float, Float> frequencies = new HashMap<>();
@@ -115,11 +122,25 @@ public class AnalyzerForm implements Form {
                 else frequencies.put(entry.getKey(), frequencies.get(entry.getKey()) + entry.getValue());
             }
         }
+        frames.parallelStream().forEach(Frame::calculateVolume);
+        frames.parallelStream().forEach(Frame::calculateZeroCrossingRate);
         List<Float> selectedSamples = clip.getSamples().subList(frames.get(0).getFrameStart(), frames.get(frames.size() - 1).getFrameStart() + Frame.SAMPLES_PER_FRAME);
         drawTimeSeriesChart(selectedAmplitudeChartPanel, "Range Amplitude", selectedSamples.stream(), Clip.SAMPLE_TIME);
         drawXYSeriesChart(fourierChartPanel, "Frequencies", frequencies.entrySet().stream().map(entry -> new FourierPoint(entry.getKey(), entry.getValue() / frames.size())));
         drawHeatMapChart(spectrumChartPanel, "Spectrum", frames, Clip.FRAME_TIME * (1.0f - overlap));
         drawTimeSeriesChart(baseToneChartPanel, "Base Tone", frames.stream().map(f -> f.calculateBasicTone(window)), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(timeVolumeChartPanel, "Volume", frames.stream().map(Frame::getVolume), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(frequencyVolumeChartPanel, "Frequency Volume", frames.stream().map(f -> f.calculateFrequencyVolume(window, 0, 11025)), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(frequencyCentroidChartPanel, "Frequency Centroid", frames.stream().map(f -> f.calculateFrequencyCentroid(window)), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(effectiveBandwithChartPanel, "Effective Bandwidth", frames.stream().map(f -> f.calculateEffectiveBandwidth(window)), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(shortTimeEnergyChartPanel, "Short Time Energy", frames.stream().map(Frame::getShortTimeEnergy), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(zeroCrossingRateChartPanel, "Zero Crossing Rate", frames.stream().map(Frame::getZeroCrossingRate), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(ersb1ChartPanel, "ERSB1(0 - 630Hz)", frames.stream().map(f -> f.calculateFrequencyVolume(window, 0, 630) / f.calculateFrequencyVolume(window, 0, 11025)), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(ersb2ChartPanel, "ERSB2(630 - 1720Hz)", frames.stream().map(f -> f.calculateFrequencyVolume(window, 630, 1720) / f.calculateFrequencyVolume(window, 0, 11025)), Clip.FRAME_TIME * (1.0f - overlap));
+        drawTimeSeriesChart(ersb3ChartPanel, "ERSB3(1720 - 4400Hz)", frames.stream().map(f -> f.calculateFrequencyVolume(window, 1720, 4400) / f.calculateFrequencyVolume(window, 0, 11025)), Clip.FRAME_TIME * (1.0f - overlap));
+        markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate", "Frequency Volume"}, frames.stream().map(Frame::isSilence), Clip.FRAME_TIME * (1.0f - overlap), Color.BLUE);
+        markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate", "Frequency Volume"}, frames.stream().map(Frame::isVoiced), Clip.FRAME_TIME * (1.0f - overlap), Color.RED);
+        markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate", "Frequency Volume"}, frames.stream().map(Frame::isVoiceless), Clip.FRAME_TIME * (1.0f - overlap), Color.GREEN);
     }
 
     public JPanel getMainPanel() {
@@ -146,14 +167,7 @@ public class AnalyzerForm implements Form {
                 ex.printStackTrace();
             }
             frameRangeLabel.setText(String.format("frame range(<from> <to>, max: %d):", clip.getFramesNum()));
-            drawTimeSeriesChart(amplitudeChartPanel, "Amplitude", clip.getSamples().stream(), Clip.SAMPLE_TIME);
-            drawFrequencyCharts();
-            drawTimeSeriesChart(timeVolumeChartPanel, "Volume", clip.getFrames().stream().map(Frame::getVolume), Clip.FRAME_TIME);
-            drawTimeSeriesChart(shortTimeEnergyChartPanel, "Short Time Energy", clip.getFrames().stream().map(Frame::getShortTimeEnergy), Clip.FRAME_TIME);
-            drawTimeSeriesChart(zeroCrossingRateChartPanel, "Zero Crossing Rate", clip.getFrames().stream().map(Frame::getZeroCrossingRate), Clip.FRAME_TIME);
-            markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isSilence), Clip.FRAME_TIME, Color.BLUE);
-            markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isVoiced), Clip.FRAME_TIME, Color.RED);
-            markCharts(new String[]{"Amplitude", "Volume", "Short Time Energy", "Zero Crossing Rate"}, clip.getFrames().stream().map(Frame::isVoiceless), Clip.FRAME_TIME, Color.GREEN);
+            drawCharts();
             setCharacteristic("Total volume", Float.toString(clip.getVolume()));
             setCharacteristic("Volume Dynamic Range", Float.toString(clip.getVolumeDynamicRange()));
             setCharacteristic("Average Short Time Energy", Float.toString(clip.getShortTimeEnergy()));
@@ -265,6 +279,20 @@ public class AnalyzerForm implements Form {
         final JScrollPane scrollPane1 = new JScrollPane();
         mainTabbedPanel.addTab("Clip-Level Info", scrollPane1);
         scrollPane1.setViewportView(characteristicsTable);
+        frequencyCentroidChartPanel = new JScrollPane();
+        mainTabbedPanel.addTab("Frequency Centroid", frequencyCentroidChartPanel);
+        effectiveBandwithChartPanel = new JScrollPane();
+        mainTabbedPanel.addTab("Effective Bandwidth", effectiveBandwithChartPanel);
+        final JScrollPane scrollPane2 = new JScrollPane();
+        mainTabbedPanel.addTab("Band Energy Ratio", scrollPane2);
+        tabbedPane1 = new JTabbedPane();
+        scrollPane2.setViewportView(tabbedPane1);
+        ersb1ChartPanel = new JScrollPane();
+        tabbedPane1.addTab("ERSB1", ersb1ChartPanel);
+        ersb2ChartPanel = new JScrollPane();
+        tabbedPane1.addTab("ERSB2", ersb2ChartPanel);
+        ersb3ChartPanel = new JScrollPane();
+        tabbedPane1.addTab("ERSB3", ersb3ChartPanel);
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridLayoutManager(2, 6, new Insets(0, 0, 0, 0), -1, -1));
         panel1.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));

@@ -113,8 +113,37 @@ public class Frame {
         zcr *= (float) samples.size() / SAMPLES_PER_FRAME;
     }
 
-    public void calculateFrequencyVolume(AudioWindow window) {
+    public float calculateFrequencyVolume(AudioWindow window, float minFreq, float maxFreq) {
         List<FourierPoint> frequencies = calculateFrequencies(window);
+        float fVolume = 0;
+        for (FourierPoint frequency : frequencies) {
+            if(frequency.frequency < minFreq || frequency.frequency > maxFreq) continue;
+            fVolume += frequency.amplitude * frequency.amplitude;
+        }
+        return fVolume / frequencies.size();
+    }
+
+    public float calculateFrequencyCentroid(AudioWindow window) {
+        List<FourierPoint> frequencies = calculateFrequencies(window);
+        float fCentroid = 0;
+        float temp = 0;
+        for (FourierPoint frequency : frequencies) {
+            fCentroid += frequency.amplitude * frequency.frequency;
+            temp += frequency.amplitude;
+        }
+        return fCentroid / temp;
+    }
+
+    public float calculateEffectiveBandwidth(AudioWindow window) {
+        List<FourierPoint> frequencies = calculateFrequencies(window);
+        float fCentroid = calculateFrequencyCentroid(window);
+        float bandwidth = 0;
+        float temp = 0;
+        for (FourierPoint frequency : frequencies) {
+            bandwidth += (frequency.amplitude - fCentroid) * (frequency.amplitude - fCentroid) * (frequency.amplitude * frequency.amplitude);
+            temp += frequency.amplitude * frequency.amplitude;
+        }
+        return (float)Math.sqrt(bandwidth / temp);
     }
 
     public boolean isVoiceless() {

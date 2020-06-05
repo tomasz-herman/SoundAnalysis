@@ -130,6 +130,62 @@
                   </component>
                 </children>
               </scrollpane>
+              <scrollpane id="a0c56" binding="frequencyCentroidChartPanel">
+                <constraints>
+                  <tabbedpane title="Frequency Centroid"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </scrollpane>
+              <scrollpane id="64ca6" binding="effectiveBandwithChartPanel">
+                <constraints>
+                  <tabbedpane title="Effective Bandwidth"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </scrollpane>
+              <scrollpane id="c88dd">
+                <constraints>
+                  <tabbedpane title="Band Energy Ratio"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <tabbedpane id="8d516" binding="tabbedPane1" default-binding="true">
+                    <constraints/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="f4c5a" binding="ersb1ChartPanel">
+                        <constraints>
+                          <tabbedpane title="ERSB1"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                      <scrollpane id="d6848" binding="ersb2ChartPanel">
+                        <constraints>
+                          <tabbedpane title="ERSB2"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                      <scrollpane id="f59b8" binding="ersb3ChartPanel">
+                        <constraints>
+                          <tabbedpane title="ERSB3"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                    </children>
+                  </tabbedpane>
+                </children>
+              </scrollpane>
             </children>
           </tabbedpane>
           <grid id="2cae9" layout-manager="GridLayoutManager" row-count="2" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
