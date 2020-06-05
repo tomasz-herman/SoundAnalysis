@@ -113,6 +113,10 @@ public class Frame {
         zcr *= (float) samples.size() / SAMPLES_PER_FRAME;
     }
 
+    public void calculateFrequencyVolume(AudioWindow window) {
+        List<FourierPoint> frequencies = calculateFrequencies(window);
+    }
+
     public boolean isVoiceless() {
         return ste < 0.005 && !isSilence();
     }

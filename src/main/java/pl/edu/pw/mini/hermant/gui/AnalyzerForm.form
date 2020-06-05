@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="pl.edu.pw.mini.hermant.gui.FrequencyAnalyzerForm">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="pl.edu.pw.mini.hermant.gui.AnalyzerForm">
   <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
@@ -28,7 +28,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <tabbedpane id="6b407" binding="tabbedPane1" default-binding="true">
+          <tabbedpane id="6b407" binding="mainTabbedPanel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="200" height="200"/>
@@ -39,7 +39,7 @@
             <children>
               <scrollpane id="ce340" binding="fourierChartPanel">
                 <constraints>
-                  <tabbedpane title="Transformata Fouriera"/>
+                  <tabbedpane title="Frequencies"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -55,7 +55,7 @@
               </scrollpane>
               <scrollpane id="53b66" binding="spectrumChartPanel">
                 <constraints>
-                  <tabbedpane title="Spektrum"/>
+                  <tabbedpane title="Spectrum"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -63,11 +63,72 @@
               </scrollpane>
               <scrollpane id="c848f" binding="baseToneChartPanel">
                 <constraints>
-                  <tabbedpane title="Ton podstawowy"/>
+                  <tabbedpane title="Base Tone"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children/>
+              </scrollpane>
+              <scrollpane id="27895" binding="volumePanel">
+                <constraints>
+                  <tabbedpane title="Volume"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <tabbedpane id="f6c89" binding="timeVolumeTabbedPanel">
+                    <constraints/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="8065a" binding="timeVolumeChartPanel">
+                        <constraints>
+                          <tabbedpane title="time"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                      <scrollpane id="75631" binding="frequencyVolumeChartPanel">
+                        <constraints>
+                          <tabbedpane title="frequency"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                    </children>
+                  </tabbedpane>
+                </children>
+              </scrollpane>
+              <scrollpane id="a3845" binding="zeroCrossingRateChartPanel">
+                <constraints>
+                  <tabbedpane title="ZCR"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </scrollpane>
+              <scrollpane id="c0aa0" binding="shortTimeEnergyChartPanel">
+                <constraints>
+                  <tabbedpane title="STE"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </scrollpane>
+              <scrollpane id="490b7">
+                <constraints>
+                  <tabbedpane title="Clip-Level Info"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="4d988" class="javax.swing.JTable" binding="characteristicsTable" custom-create="true">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
               </scrollpane>
             </children>
           </tabbedpane>
