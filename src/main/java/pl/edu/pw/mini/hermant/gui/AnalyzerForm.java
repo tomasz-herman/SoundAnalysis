@@ -188,7 +188,7 @@ public class AnalyzerForm implements Form {
         for (int i = 0, dataSize = data.size(); i < dataSize; i++) {
             if (data.get(i)) {
                 IntervalMarker marker = new IntervalMarker(timeStep * i, timeStep * (i + 1), color);
-                marker.setAlpha(0.25f);
+                marker.setAlpha(0.12f);
                 for (String chart : charts) this.charts.get(chart).getXYPlot().addDomainMarker(marker);
             }
         }
