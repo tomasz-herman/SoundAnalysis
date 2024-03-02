@@ -8,7 +8,6 @@ import pl.edu.pw.mini.hermant.gui.WindowBuilder;
 
 public class Main {
     public static void main(String[] args) {
-        if (!SystemUtils.IS_OS_LINUX) throw new UnsupportedOperationException("Unsupported OS");
         FlatIntelliJLaf.install();
         WindowBuilder builder = new WindowBuilder();
         Form form = new AnalyzerForm();
