@@ -4,6 +4,11 @@ Application to analyze sound files in time or frequency domain.
 It uses `ffmpeg` to turn any audio or video file into raw audio data.
 Java 8+ is required to run this application.
 
+### Prerequisites
+
+Please ensure that you have `ffmpeg` installed and configured in your `$PATH` before running this application. 
+To verify the setup, open your terminal and enter the command `ffmpeg`.
+
 ### Run the project
 
 To run the application do the following steps:
